@@ -1,7 +1,10 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.VisualBasic.ApplicationServices;
+using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+
 
 namespace TestMenuStrip
 {
@@ -15,36 +18,34 @@ namespace TestMenuStrip
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (File.Exists(Environment.CurrentDirectory + "\\Пользователи.txt"))
+            SqlConnection sqlConnection = DataBase.getConnection();
+
+            var loginUser = textBox1.Text;
+            var passwordUser = textBox2.Text;
+            SqlDataAdapter adapter = new SqlDataAdapter();
+            DataTable dataTable = new DataTable();
+
+            string queryString = $"select loginUser, passwordUser, nameFile from registerTable where loginUser ='{loginUser}' and  passwordUser = '{passwordUser}'";
+            SqlCommand sqlCommand = new SqlCommand(queryString, sqlConnection);
+
+            adapter.SelectCommand = sqlCommand;
+            adapter.Fill(dataTable);
+            if(dataTable.Rows.Count == 1)
             {
-                List<string> fileLines = File.ReadLines(Environment.CurrentDirectory + "\\Пользователи.txt").ToList();
-                if (fileLines.Count == 0)
-                {
-                    MessageBox.Show("Файл с аккаунтами пуст");
-                    return;
-                }
-                string Input = textBox1.Text + " " + textBox2.Text;
-                foreach (string b in fileLines)
-                {
-                    if (b.Contains(Input))
-                    {
-                        string[] arr = b.Split(' ');
-                        Form2 newForm = new Form2(arr[2]);
-                        newForm.ShowDialog();
-                        this.Hide();
-                        timer1.Enabled = false;
-                        return;
-                    }
-                }
+                string line = dataTable.Rows[0]["nameFile"].ToString();
+                Form2 newForm = new Form2(line);
+                newForm.ShowDialog();
+                this.Hide();
+                timer1.Enabled = false;
+                return;
             }
             else
             {
-                MessageBox.Show("Нужные файлы не были найдены.");
-                return;
+                MessageBox.Show("Неправильные данные, попробуйте ещё раз");
+                textBox1.ForeColor = System.Drawing.Color.Red;
+                textBox2.ForeColor = System.Drawing.Color.Red;
             }
-            MessageBox.Show("Неправильные данные, попробуйте ещё раз");
-            textBox1.ForeColor = System.Drawing.Color.Red;
-            textBox2.ForeColor = System.Drawing.Color.Red;
+
         }
 
         private void timer1_Tick(object sender, EventArgs e)
